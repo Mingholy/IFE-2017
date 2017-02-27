@@ -162,7 +162,7 @@ aside h1 {
     color: #8c8c8c;
 }
 
-.input-table input, select, textarea {
+.input-table input, select {
     margin: 10px 0 10px 0;
 }
 
@@ -173,6 +173,7 @@ aside h1 {
 
 .input-table textarea {
     width: 100%;
+    margin: 0 0 15px 0;
     font-size: 1.5em;
 }
 
