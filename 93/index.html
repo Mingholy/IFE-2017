@@ -29,9 +29,11 @@
             var button = document.getElementById("button");
             button.onclick = function() {
                 //取值改值
-                var inputValue = document.getElementById("aqi-input").value;
-                if (inputValue) {
-                    document.getElementById("aqi-display").textContent = inputValue;
+                var inputValue = Number(document.getElementById("aqi-input").value);
+                if (!isNaN(inputValue)) {
+                    document.getElementById("aqi-display").textContent = inputValue.toString();
+                } else {
+                    document.getElementById("aqi-display").textContent = "输入不合法！";
                 }
                 return false;
             }
