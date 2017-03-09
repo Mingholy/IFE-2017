@@ -16,15 +16,6 @@ function $(selector) {
 }
 
 /**
- *  获取元素内部数值
- * @param $li
- * @returns {Number}
- */
-function getLiNum($li) {
-    return parseFloat($li.textContent);
-}
-
-/**
  * 绑定元素与事件函数
  * @param selector
  * @param func
@@ -146,23 +137,6 @@ var Queue = (function () {
         _remove: function () {
             this.remove();
             return false;
-        },
-
-        _bubbleSort: function () {
-            var array = this._list,
-                temp,
-                n = array.length;
-            if (array.length === 0) {
-                return false;
-            }
-            while(n--) {
-                for(var i = 0; i < n; i++){
-                    if( getLiNum(array[i]) > getLiNum(array[i + 1])) {
-                        this._switch(i, i + 1);
-                    }
-                }
-            }
-            return array;
         }
     };
     return Queue;
