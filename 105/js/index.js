@@ -21,10 +21,10 @@ function $(selector) {
  * @param func
  */
 function bindEvent(selector, func) {
-    var element = $(selector);
-    element.addEventListener("click", function() {
-        //这里这样写应该是判断func的合法性并将this指向调用者
-        func && func.call(element);
+    let element = $(selector);
+    element.addEventListener("click", function(ev) {
+        //应该是检查函数合法性并修改this指向
+        func && func.call(element, ev);
     });
 }
 
@@ -46,7 +46,7 @@ function isType(type) {
  */
 function getInputValue(selector) {
     return function(){
-        var inputEl = $(selector),
+        let inputEl = $(selector),
             inputValue = parseFloat(inputEl.value);
 
         if (!inputEl) {
@@ -68,6 +68,23 @@ function getInputValue(selector) {
     }
 }
 
+function getLiNum ($li) {
+    if (! $li) return false;
+    return parseFloat($li.textContent);
+}
+
+function setCompare($li) {
+    return $li.className = "current";
+}
+
+function setKey($li) {
+    return $li.className = "key";
+}
+
+function setNormal($li) {
+    return $li.className = "";
+}
+
 /**
  * 定义Queue对象
  * @type {Function}
@@ -84,11 +101,13 @@ var Queue = (function () {
     Queue.prototype = {
         constructor: Queue,
 
-        _createLi: function (number) {
-            var $li = document.createElement("li"),
+        _createLi: function (number, index) {
+            index = index ? this._list.length + 1 : 0;
+            let $li = document.createElement("li"),
                 height = (3 * number).toString() + "px",
                 mtop = (300 - 3 * number).toString() + "px";
-            $li.addEventListener("click", this._remove);
+            $li.id = "item-" + index.toString();
+            $li.addEventListener("click", this._remove(this));
             $li.style.height = height;
             $li.style.marginTop = mtop;
             $li.textContent = number;
@@ -100,9 +119,10 @@ var Queue = (function () {
                 alert("队列满啦！");
                 return false;
             }
-            var $li = this._createLi(number);
+            let $li = this._createLi(number, 1);
             this._list.push($li);
             this._$container.appendChild($li);
+            this._reIndex();
             return $li;
         },
 
@@ -110,8 +130,10 @@ var Queue = (function () {
             if (this._list.length === 0) {
                 return false;
             }
+            let text = this._list.pop().textContent;
             this._$container.lastChild.remove();
-            return this._list.pop().textContent;
+            this._reIndex();
+            return text;
         },
 
         _unshift: function (number) {
@@ -119,10 +141,11 @@ var Queue = (function () {
                 alert("队列满啦！");
                 return false;
             }
-            var $li = this._createLi(number),
+            let $li = this._createLi(number),
                 $firstLi = this._$container.firstChild;
             this._list.unshift($li);
             this._$container.insertBefore($li, $firstLi);
+            this._reIndex();
             return $li;
         },
 
@@ -130,14 +153,51 @@ var Queue = (function () {
             if (this._list.length === 0) {
                 return false;
             }
+            let text = this._list.shift().textContent;
             this._$container.firstChild.remove();
-            return this._list.shift().textContent;
+            this._reIndex();
+            return text;
         },
 
-        _remove: function () {
-            this.remove();
-            return false;
+        _remove: function (obj) {
+            return function () {
+                let queueObj = obj,
+                    index = this.id.split("-")[1];
+                queueObj._list[index].remove();
+                queueObj._list.splice(index, 1);
+                queueObj._reIndex();
+            };
+        },
+
+        _removeAll: function () {
+            let $nodeList = this._$container.childNodes;
+            if ($nodeList.length !== 0) {
+                for (let i = $nodeList.length - 1; i >= 0; i--) {
+                    $nodeList[i].remove();
+                }
+            }
+        },
+
+        _renderAll: function() {
+            this._reIndex();
+            this._removeAll();
+            for (let i = 0; i < this._list.length; i++) {
+                this._$container.appendChild(this._list[i]);
+            }
+        },
+
+        _reIndex : function() {
+            this._list.forEach(($el, index) => $el.id = "item-" + index.toString());
+        },
+
+        _test : function() {
+            for (let i = 20; i > 10; i--) {
+                this._list.push(this._createLi(i));
+                this._reIndex();
+                this._renderAll();
+            }
         }
+
     };
     return Queue;
 })();
@@ -146,39 +206,62 @@ var Queue = (function () {
  * 启动函数
  */
 window.onload = function() {
-    var queueObj = new Queue("#queue"),
+    let queueObj = new Queue("#queue"),
         getNum = getInputValue("#input");
 
+    queueObj._renderAll();
+
     function leftInEvent() {
-        var num = getNum();
+        let num = getNum();
         if (num) {
             queueObj._unshift(num);
         }
     }
 
     function rightInEvent() {
-        var num = getNum();
+        let num = getNum();
         if (num) {
             queueObj._push(num);
         }
     }
 
     function leftOutEvent() {
-        var deletedNum = queueObj._shift();
+        let deletedNum = queueObj._shift();
         deletedNum ? alert(deletedNum) : alert("Queue is already empty!");
     }
 
     function rightOutEvent() {
-        var deletedNum = queueObj._pop();
+        let deletedNum = queueObj._pop();
         deletedNum ? alert(deletedNum) : alert("Queue is already empty!");
     }
 
-    function bubbleSortEvent() {
-        if (! queueObj._bubbleSort()){
-            alert("队列为空！");
-        }
+    function testEvent() {
+        queueObj._test();
     }
 
+    function bubbleSortEvent() {
+        if (queueObj._list.length === 0){
+            alert("队列为空！");
+            return false;
+        }
+        let iter = bubbleSort(queueObj);
+        let loop = function() {
+            iter.next();
+        };
+        setInterval(loop, 100);
+    }
+
+    function quickSortEvent() {
+        if (queueObj._list.length === 0){
+            alert("队列为空！");
+            return false;
+        }
+        let iter = quickSort(queueObj);
+        let loop = function() {
+            iter.next();
+        };
+        setInterval(loop, 500);
+    }
 
     //绑定事件处理函数
     bindEvent("#left-in", leftInEvent);
@@ -186,35 +269,80 @@ window.onload = function() {
     bindEvent("#left-out", leftOutEvent);
     bindEvent("#right-out", rightOutEvent);
     bindEvent("#bubble-sort", bubbleSortEvent);
+    bindEvent("#quick-sort", quickSortEvent);
+    bindEvent("#test", testEvent);
 };
 
+function bubbleSort (queue) {
 
+    function* sort (queue) {
 
-function quickSort(array) {
-    function sort(start, end){
-        var key = array[start],
-            i = start,
-            j = end - 1;
-        if (end > (start + 1)) {
-            while (i < j) {
-                for (; i < j; j--) {
-                    if (array[j] < key) {
-                        array[i++] = array[j];
-                        break;
-                    }
+        let array = queue._list,
+            n = array.length,
+            compareTimes = 0,
+            temp;
+        $("#compare-times").textContent = compareTimes;
+
+        while (n--) {
+            for (var i = 0; i < n; i++) {
+                setCompare(array[i]);
+                setCompare(array[i + 1]);
+                $("#compare-times").textContent = ++compareTimes;
+                if (getLiNum(array[i]) > getLiNum(array[i + 1])) {
+                    temp = array[i];
+                    array[i] = array[i + 1];
+                    array[i + 1] = temp;
                 }
-                for (; i < j; i++) {
-                    if (array[i] > key) {
-                        array[j--] = array[i];
-                        break;
-                    }
-                }
+                yield queue._renderAll();
+                setNormal(array[i]);
             }
-            array[i] = key;
-            sort(0, i);
-            sort(i + 1, end);
+            setNormal(array[i]);
         }
     }
-    sort(0, array.length);
-    return array;
+    return sort(queue);
+}
+
+function quickSort (queue) {
+
+    var arr = queue._list,
+        compareTimes = 0;
+    $("#compare-times").textContent = compareTimes;
+
+    function* sort(start, end){
+        var pivotLi = arr[start],
+            pivot = getLiNum(pivotLi),
+            i = start,
+            j = end - 1;
+
+        if ((end - start) <= 1) {
+            return arr;
+        }
+
+        if ((end - start) > 1) {
+           while (i < j) {
+               for(; j > i; j--) {
+                   $("#compare-times").textContent = ++compareTimes;
+                   if (getLiNum(arr[j]) < pivot) {
+                       arr[i++] = arr[j];
+                       break;
+                   }
+               }
+               for (; i < j; i++) {
+                   $("#compare-times").textContent = ++compareTimes;
+                   if (getLiNum(arr[i]) > pivot) {
+                       arr[j--] = arr[i];
+                       queue._renderAll();
+                       break;
+                   }
+               }
+           }
+           arr[i] = pivotLi;
+           queue._renderAll();
+           yield;
+           yield* sort(0, i);
+           yield* sort(i + 1, end);
+        }
+    }
+
+    return sort(0, arr.length);
 }
