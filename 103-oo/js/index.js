@@ -25,11 +25,10 @@ function $(id) {
  */
 function bindEvent(selector, func) {
     var element = $(selector);
-    element.addEventListener('click', function() {
+    element.addEventListener("click", function() {
         //这里这样写应该是判断func的合法性
         func && func.call(element);
     });
-
 }
 /**
  * 获取输入值
@@ -42,7 +41,7 @@ function getValue(inputSelector) {
         var num = parseInt($input.value);
 
         //取后清空
-        $input.value = '';
+        $input.value = "";
 
         //判断是否为数字或空
         if(! isType("Number")(num) || isNaN(num)) {
@@ -64,7 +63,7 @@ function getValue(inputSelector) {
 function isType(type) {
     return function(target) {
         //注意toString.call(target)返回的是目标的类型：[object Number], [object Array]这样的，用来判断类型。注意object后有个空格！
-        return toString.call(target) === '[object ' + type + ']';
+        return toString.call(target) === "[object " + type + "]";
     }
 }
 

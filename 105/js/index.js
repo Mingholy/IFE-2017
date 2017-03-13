@@ -132,7 +132,7 @@ var Queue = (function () {
 
         //右侧入
         _push: function (number) {
-            if (this._list.length === this._listMaxLength) {
+            if (this._list.length > this._listMaxLength) {
                 alert("队列满啦！");
                 return false;
             }
@@ -156,7 +156,7 @@ var Queue = (function () {
 
         //左侧入
         _unshift: function (number) {
-            if (this._list.length === this._listMaxLength) {
+            if (this._list.length > this._listMaxLength) {
                 alert("队列满啦！");
                 return false;
             }
