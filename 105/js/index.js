@@ -68,29 +68,43 @@ function getInputValue(selector) {
     }
 }
 
+/**
+ * 获取li元素内数字值
+ * @param $li
+ * @returns {*}
+ */
 function getLiNum ($li) {
     if (! $li) return false;
     return parseFloat($li.textContent);
 }
 
+/**
+ * 修改当前正在被比较的li元素的样式
+ * @param $li
+ * @returns {string}
+ */
 function setCompare($li) {
     return $li.className = "current";
 }
 
-function setKey($li) {
-    return $li.className = "key";
-}
-
+/**
+ * 切换回默认样式
+ * @param $li
+ * @returns {string}
+ */
 function setNormal($li) {
     return $li.className = "";
 }
 
 /**
  * 定义Queue对象
+ * 非ES6写法
+ * ES6还不熟悉，这个文件中是混写了ES6，这里应该是定义一个class，但是没用ES6的写法
  * @type {Function}
  */
 var Queue = (function () {
 
+    //构造函数
     function Queue(container) {
         //存放列表项
         this._list = [];
@@ -98,9 +112,11 @@ var Queue = (function () {
         this._listMaxLength = 20;
     }
 
+    //重写原型
     Queue.prototype = {
         constructor: Queue,
 
+        //创建li元素值为nmber，索引为index
         _createLi: function (number, index) {
             index = index ? this._list.length + 1 : 0;
             let $li = document.createElement("li"),
@@ -114,6 +130,7 @@ var Queue = (function () {
             return $li;
         },
 
+        //右侧入
         _push: function (number) {
             if (this._list.length === this._listMaxLength) {
                 alert("队列满啦！");
@@ -126,6 +143,7 @@ var Queue = (function () {
             return $li;
         },
 
+        //右侧出
         _pop: function () {
             if (this._list.length === 0) {
                 return false;
@@ -136,6 +154,7 @@ var Queue = (function () {
             return text;
         },
 
+        //左侧入
         _unshift: function (number) {
             if (this._list.length === this._listMaxLength) {
                 alert("队列满啦！");
@@ -149,6 +168,7 @@ var Queue = (function () {
             return $li;
         },
 
+        //左侧出
         _shift: function () {
             if (this._list.length === 0) {
                 return false;
@@ -159,6 +179,7 @@ var Queue = (function () {
             return text;
         },
 
+        //点击移除
         _remove: function (obj) {
             return function () {
                 let queueObj = obj,
@@ -169,6 +190,7 @@ var Queue = (function () {
             };
         },
 
+        //移除所有
         _removeAll: function () {
             let $nodeList = this._$container.childNodes;
             if ($nodeList.length !== 0) {
@@ -178,6 +200,7 @@ var Queue = (function () {
             }
         },
 
+        //渲染_list中的所有元素
         _renderAll: function() {
             this._reIndex();
             this._removeAll();
@@ -186,10 +209,12 @@ var Queue = (function () {
             }
         },
 
+        //更新索引
         _reIndex : function() {
             this._list.forEach(($el, index) => $el.id = "item-" + index.toString());
         },
 
+        //测试
         _test : function() {
             for (let i = 20; i > 10; i--) {
                 this._list.push(this._createLi(i));
@@ -197,7 +222,6 @@ var Queue = (function () {
                 this._renderAll();
             }
         }
-
     };
     return Queue;
 })();
@@ -239,6 +263,11 @@ window.onload = function() {
         queueObj._test();
     }
 
+    /**
+     * 排序可视化
+     * 每0.5s对排序算法返回的迭代器调用next()，显示下一步操作
+     * @returns {boolean}
+     */
     function bubbleSortEvent() {
         if (queueObj._list.length === 0){
             alert("队列为空！");
@@ -273,6 +302,12 @@ window.onload = function() {
     bindEvent("#test", testEvent);
 };
 
+/**
+ * 冒泡排序
+ * 直接对queue._list中的元素按照其内容值进行比较排序
+ * @param queue
+ * @returns {*}
+ */
 function bubbleSort (queue) {
 
     function* sort (queue) {
@@ -302,47 +337,50 @@ function bubbleSort (queue) {
     return sort(queue);
 }
 
+/**
+ * 快速排序算法
+ * 创建了一个递归迭代器
+ * @param queue
+ * @returns {*}
+ */
 function quickSort (queue) {
-
     var arr = queue._list,
-        compareTimes = 0;
-    $("#compare-times").textContent = compareTimes;
+        compare = 0;
 
-    function* sort(start, end){
-        var pivotLi = arr[start],
-            pivot = getLiNum(pivotLi),
-            i = start,
-            j = end - 1;
-
+    function* sort (start, end) {
+        arr = queue._list;
         if ((end - start) <= 1) {
-            return arr;
+            if (end < 0){
+                return;
+            }
+            if (getLiNum(queue._list[end]) < getLiNum(queue._list[start])) {
+               let temp = queue._list[start];
+               queue._list[start] = queue._list[end];
+               queue._list[end] = temp;
+            }
+            queue._renderAll();
+            return;
         }
 
-        if ((end - start) > 1) {
-           while (i < j) {
-               for(; j > i; j--) {
-                   $("#compare-times").textContent = ++compareTimes;
-                   if (getLiNum(arr[j]) < pivot) {
-                       arr[i++] = arr[j];
-                       break;
-                   }
-               }
-               for (; i < j; i++) {
-                   $("#compare-times").textContent = ++compareTimes;
-                   if (getLiNum(arr[i]) > pivot) {
-                       arr[j--] = arr[i];
-                       queue._renderAll();
-                       break;
-                   }
-               }
-           }
-           arr[i] = pivotLi;
-           queue._renderAll();
-           yield;
-           yield* sort(0, i);
-           yield* sort(i + 1, end);
+        let pivotIndex = Math.floor((start + end)/ 2),
+            pivotLi = arr.splice(pivotIndex, 1)[0],
+            pivot = getLiNum(pivotLi),
+            left = [],
+            right = [];
+        for (let i = start; i < end; i++) {
+            compare++;
+            if (getLiNum(arr[i]) <= pivot) {
+                left.push(arr[i]);
+            } else {
+                right.push(arr[i]);
+            }
         }
+        let result = left.concat([pivotLi], right);
+        queue._list = queue._list.slice(0, start).concat(result, queue._list.slice(end));
+        $("#compare-times").textContent = compare.toString();
+        yield queue._renderAll();
+        yield* sort(start, start + left.length - 1);
+        yield* sort(start + left.length, end);
     }
-
-    return sort(0, arr.length);
+    return sort(0, arr.length - 1);
 }
